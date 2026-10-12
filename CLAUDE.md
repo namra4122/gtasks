@@ -17,7 +17,7 @@ GTasks is a command-line interface tool for managing Google Tasks, written in Go
 ### Key Dependencies
 
 - **Cobra**: CLI framework for command structure and parsing
-- **Google Tasks API**: Official Google API client for Go
+- **Google Tasks / Calendar APIs**: Official Google API client for Go (`tasks/v1`, `calendar/v3`)
 - **OAuth2**: Authentication with Google services
 - **PromptUI**: Interactive prompts for user input
 - **TableWriter**: Formatted table output for task listings
@@ -85,11 +85,18 @@ gtasks
 │   ├── view                # List all task lists
 │   ├── add -t "title"      # Create new task list
 │   └── rm                  # Delete task list
-└── tasks [-l "list-name"]  # Task operations
-    ├── view [--sort=due]   # View tasks (with sorting)
-    ├── add [-t "title"]    # Create new task
-    ├── done                # Mark task complete
-    └── rm                  # Delete task
+├── tasks [-l "list-name"]  # Task operations
+│   ├── view [--sort=due]   # View tasks (with sorting)
+│   ├── add [-t "title"]    # Create new task
+│   ├── done                # Mark task complete
+│   └── rm                  # Delete task
+├── calendar                # Google Calendar (api/calendar.go, cmd/calendar.go)
+│   ├── list                # List calendars
+│   └── events [-c "cal"]   # Defaults to primary / calendar.default_calendar
+│       ├── view [--today|--tomorrow|--week|--from --to]
+│       ├── add -t -s [-e|--duration] [--all-day]
+│       └── rm
+└── agenda                  # Events + tasks due in range (cmd/agenda.go)
 ```
 
 ## Build System
@@ -156,9 +163,11 @@ When implementing a new feature, follow this workflow:
 
 ### Google Tasks API Usage
 
-- Scopes: `tasks.TasksScope` (read/write access to tasks)
+- Scopes: `tasks.TasksScope`, `calendar.CalendarEventsScope`, `calendar.CalendarCalendarlistReadonlyScope`
+- `isTokenValid` also probes the Calendar API, so tokens issued before calendar support trigger re-auth on `gtasks login`
 - Endpoints used: Tasks.List, Tasks.Insert, Tasks.Patch, Tasks.Delete
 - Task lists: TaskLists.List, TaskLists.Insert, TaskLists.Delete
+- Calendar: CalendarList.List, Events.List (singleEvents, ordered by start), Events.Insert, Events.Delete
 
 ### Error Handling
 

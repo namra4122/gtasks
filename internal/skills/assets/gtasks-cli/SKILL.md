@@ -1,6 +1,6 @@
 ---
 name: gtasks-cli
-description: Manage Google Tasks from the command line - view, create, update, delete tasks and task lists. Use when the user asks to interact with Google Tasks, manage to-do items, create task lists, mark tasks complete, or check their Google Tasks.
+description: Manage Google Tasks and Google Calendar from the command line - view, create, update, delete tasks and task lists; view, add, and delete calendar events; show a combined agenda. Use when the user asks to interact with Google Tasks or Google Calendar, manage to-do items, check their schedule or agenda, add events, mark tasks complete, or plan their day.
 homepage: https://github.com/BRO3886/gtasks
 license: MIT
 compatibility: Requires gtasks CLI tool to be installed and authenticated
@@ -146,6 +146,8 @@ For automated setups, prefer `--agent <name>` or `--agent all` to avoid interact
 - **Task Lists**: Containers that hold tasks (like "Work", "Personal", "Shopping")
 - **Tasks**: Individual to-do items within a task list
 - **Task Properties**: Title (required), notes/description (optional), due date (optional), status (pending/completed)
+- **Calendars / Events**: Google Calendar events, read and created with the same login (`gtasks calendar ...`)
+- **Agenda**: Events plus tasks due in the same range (`gtasks agenda`)
 
 ## Command Structure
 
@@ -391,7 +393,56 @@ Links:
 View in Google Tasks: https://tasks.google.com/...
 ```
 
+## Calendar
+
+All `events` commands take `-c "<calendar name|id>"`. Without it, gtasks uses `GTASKS_DEFAULT_CALENDAR` / `calendar.default_calendar`, falling back to the primary calendar. No interactive prompt is needed to pick a calendar.
+
+### List Calendars
+```bash
+gtasks calendar list --format json
+```
+
+### View Events
+Defaults to today. Range flags: `--today`, `--tomorrow`, `--week` (today + 6 days), `--from X [--to Y]` (date-only `--to` is inclusive).
+```bash
+gtasks calendar events view --format json
+gtasks calendar events view --week --format json
+gtasks calendar events view -c "Work" --from 2026-10-01 --to 2026-10-31 --format json
+```
+JSON fields: `number`, `id`, `title`, `start`, `end` (RFC3339, or `YYYY-MM-DD` for all-day), `all_day`, `location`, `description`, `calendar`, `status`, `link`.
+
+### Add an Event
+```bash
+gtasks calendar events add -t "Standup" -s "tomorrow 09:30" --duration 15m
+gtasks calendar events add -t "Review" -s "2026-10-20 14:00" -e "2026-10-20 15:30" --location "Room 4" -n "notes"
+gtasks calendar events add -t "Offsite" -s 2026-10-20 -e 2026-10-21   # all-day; end is inclusive
+```
+`-t` and `-s` are required. A start without a time creates an all-day event. Times are local. `today`/`tomorrow` prefixes are supported (e.g. `today 3pm`).
+
+### Delete an Event
+Events are numbered as in `events view` for the same range flags. Always view first.
+```bash
+gtasks calendar events view --tomorrow
+gtasks calendar events rm 2 --tomorrow
+```
+
+### Agenda (events + due tasks)
+Best single call for daily planning or journaling. Tasks come from every tasklist unless `-l` is set.
+```bash
+gtasks agenda --format json
+gtasks agenda --week --format json
+gtasks agenda -c "Work" -l "My Tasks" --tomorrow
+```
+JSON shape: `{"from", "to", "events": [...event fields...], "tasks": [{"title", "description", "due", "tasklist"}]}`.
+
+If calendar commands fail with "token lacks calendar access", the user must run `gtasks logout && gtasks login` (interactive browser flow).
+
 ## Common Workflows
+
+### Plan the Day
+```bash
+gtasks agenda --format json
+```
 
 ### Quick Task Creation
 When a user says "add a task to my work list":

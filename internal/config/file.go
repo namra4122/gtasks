@@ -51,6 +51,7 @@ func LoadAppConfig() {
 	// 1. Environment variables — GTASKS_ prefix, mapped to dotted keys
 	// e.g. GTASKS_CLIENT_ID -> credentials.client_id
 	//      GTASKS_DEFAULT_TASKLIST -> tasks.default_task_list
+	//      GTASKS_DEFAULT_CALENDAR -> calendar.default_calendar
 	k.Load(env.Provider("GTASKS_", ".", func(s string) string {
 		s = strings.TrimPrefix(s, "GTASKS_")
 		s = strings.ToLower(s)
@@ -61,6 +62,8 @@ func LoadAppConfig() {
 			return "credentials.client_secret"
 		case "default_tasklist":
 			return "tasks.default_task_list"
+		case "default_calendar":
+			return "calendar.default_calendar"
 		}
 		return "" // skip unrecognized GTASKS_* vars
 	}), nil)
@@ -69,6 +72,14 @@ func LoadAppConfig() {
 // GetDefaultTaskList returns the default task list from config/env, or empty string.
 func GetDefaultTaskList() string {
 	return k.String("tasks.default_task_list")
+}
+
+// GetDefaultCalendar returns the default calendar from config/env, or "primary".
+func GetDefaultCalendar() string {
+	if c := k.String("calendar.default_calendar"); c != "" {
+		return c
+	}
+	return "primary"
 }
 
 // GetCredentials returns client ID and secret from config/env.

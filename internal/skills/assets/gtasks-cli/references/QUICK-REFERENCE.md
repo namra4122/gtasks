@@ -90,6 +90,20 @@ gtasks tasks info 1                 # Show details for task #1
 gtasks tasks info 2 -l "Work"       # Show details for task #2 in Work list
 ```
 
+## Calendar
+
+```bash
+gtasks calendar list [--format json]
+gtasks calendar events view [-c "Work"] [--today|--tomorrow|--week|--from X --to Y] [--max N] [--format table|json|csv]
+gtasks calendar events add -t "Title" -s "tomorrow 09:30" [-e "end" | --duration 30m] [--all-day] [-n "notes"] [--location "L"]
+gtasks calendar events rm [N] [range flags]
+gtasks agenda [-c "Work"] [-l "My Tasks"] [range flags] [--format table|json]
+```
+
+- Default calendar: `-c` > `GTASKS_DEFAULT_CALENDAR` > `calendar.default_calendar` > primary
+- Start without a time = all-day event; all-day `--end` is inclusive
+- "token lacks calendar access" → `gtasks logout && gtasks login`
+
 ## Date Format Examples
 
 All these work with the `-d` flag:

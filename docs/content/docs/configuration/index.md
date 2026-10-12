@@ -2,7 +2,7 @@
 title: "Configuration"
 description: "Configure gtasks with a config file, environment variables, or build-time flags. Supports TOML, YAML, and JSON."
 draft: false
-weight: 5
+weight: 6
 sitemap:
   priority: 0.8
 ---
@@ -63,6 +63,12 @@ client_secret = "your-client-secret"
 # When set, gtasks skips the interactive task list prompt.
 # Overridden by: GTASKS_DEFAULT_TASKLIST environment variable, then the -l flag.
 # default_task_list = "My Tasks"
+
+[calendar]
+# Calendar used by calendar/agenda commands when -c / --calendar is not provided.
+# Accepts a calendar name or id. Defaults to your primary calendar.
+# Overridden by: GTASKS_DEFAULT_CALENDAR environment variable, then the -c flag.
+# default_calendar = "Work"
 ```
 
 ## Settings reference
@@ -81,6 +87,12 @@ Required for all users. gtasks does not ship with embedded credentials — you m
 | Key | Type | Env var override | CLI flag override | Description |
 |-----|------|-----------------|-------------------|-------------|
 | `default_task_list` | string | `GTASKS_DEFAULT_TASKLIST` | `-l` / `--tasklist` | Task list selected automatically when no flag is given |
+
+### `[calendar]`
+
+| Key | Type | Env var override | CLI flag override | Description |
+|-----|------|-----------------|-------------------|-------------|
+| `default_calendar` | string | `GTASKS_DEFAULT_CALENDAR` | `-c` / `--calendar` | Calendar name or id used when no flag is given (default: primary) |
 
 ## Examples
 
@@ -124,4 +136,5 @@ All settings in the config file can be overridden with environment variables:
 | `GTASKS_CLIENT_ID` | `credentials.client_id` |
 | `GTASKS_CLIENT_SECRET` | `credentials.client_secret` |
 | `GTASKS_DEFAULT_TASKLIST` | `tasks.default_task_list` |
+| `GTASKS_DEFAULT_CALENDAR` | `calendar.default_calendar` |
 | `XDG_CONFIG_HOME` | Base directory for the config folder (XDG spec) |
