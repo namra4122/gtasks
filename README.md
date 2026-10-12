@@ -106,7 +106,7 @@ To use GTasks, you need to set up Google OAuth2 credentials:
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Create a new project or select existing one
-3. Enable the Google Tasks API
+3. Enable the Google Tasks API and the Google Calendar API
 4. Create OAuth2 credentials:
 
    - Application type: "Web application"
@@ -117,7 +117,9 @@ To use GTasks, you need to set up Google OAuth2 credentials:
      - `http://localhost:9090/callback`
      - `http://localhost:9091/callback`
 
-5. Supply credentials via environment variables:
+5. On the OAuth consent screen, add the `tasks`, `calendar.events`, and `calendar.calendarlist.readonly` scopes (and yourself as a test user while the app is in testing)
+
+6. Supply credentials via environment variables:
 
 ```bash
 export GTASKS_CLIENT_ID="your-client-id.apps.googleusercontent.com"
@@ -320,6 +322,44 @@ gtasks tasks update 1 --note "Updated note" --due "tomorrow"
 
 ```bash
 gtasks tasks rm
+```
+
+### Calendar
+
+Calendar commands use the same login. If you logged in before calendar support, run `gtasks logout && gtasks login` once.
+
+- List calendars
+
+```bash
+gtasks calendar list
+```
+
+- View events (defaults to today; `-c` picks a calendar, default: primary)
+
+```bash
+gtasks calendar events view
+gtasks calendar events view --week --format json
+gtasks calendar events view -c "Work" --from 2026-10-01 --to 2026-10-31
+```
+
+- Add an event
+
+```bash
+gtasks calendar events add -t "Standup" -s "tomorrow 09:30" --duration 15m
+gtasks calendar events add -t "Offsite" -s 2026-10-20 -e 2026-10-21   # all-day
+```
+
+- Delete an event
+
+```bash
+gtasks calendar events rm
+```
+
+- Agenda: events plus tasks due in the same range
+
+```bash
+gtasks agenda
+gtasks agenda --week --format json
 ```
 
 <div align="center">

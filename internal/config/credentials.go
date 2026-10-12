@@ -5,6 +5,7 @@ import (
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
+	"google.golang.org/api/calendar/v3"
 	"google.golang.org/api/tasks/v1"
 )
 
@@ -16,7 +17,7 @@ var ClientID = ""
 // Note: For Google OAuth2, even "public" desktop clients require a client secret
 var ClientSecret = ""
 
-// GetOAuth2Config creates OAuth2 configuration for Google Tasks API.
+// GetOAuth2Config creates OAuth2 configuration for Google Tasks and Calendar APIs.
 //
 // Credential resolution order (highest priority first):
 //  1. GTASKS_CLIENT_ID / GTASKS_CLIENT_SECRET env vars or config file (via koanf)
@@ -43,7 +44,11 @@ func GetOAuth2Config() (*oauth2.Config, error) {
 	config := &oauth2.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
-		Scopes:       []string{tasks.TasksScope},
+		Scopes: []string{
+			tasks.TasksScope,
+			calendar.CalendarEventsScope,
+			calendar.CalendarCalendarlistReadonlyScope,
+		},
 		Endpoint:     google.Endpoint,
 		// RedirectURL will be set dynamically by auth flow
 	}

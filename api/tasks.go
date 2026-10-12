@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"google.golang.org/api/tasks/v1"
 )
@@ -107,4 +108,35 @@ func DeleteTask(srv *tasks.Service, id string, tid string) error {
 // Completed tasks are marked as hidden and no longer returned by default.
 func ClearTasks(srv *tasks.Service, tasklistID string) error {
 	return srv.Tasks.Clear(tasklistID).Do()
+}
+
+// GetTasksDue retrieves pending tasks whose due date falls in [dueMin, dueMax).
+func GetTasksDue(srv *tasks.Service, tasklistID string, dueMin, dueMax time.Time) ([]*tasks.Task, error) {
+	var allTasks []*tasks.Task
+	pageToken := ""
+
+	for {
+		call := srv.Tasks.List(tasklistID).
+			ShowCompleted(false).
+			DueMin(dueMin.Format(time.RFC3339)).
+			DueMax(dueMax.Format(time.RFC3339)).
+			MaxResults(100)
+		if pageToken != "" {
+			call = call.PageToken(pageToken)
+		}
+
+		r, err := call.Do()
+		if err != nil {
+			return nil, fmt.Errorf("unable to retrieve tasks: %v", err)
+		}
+
+		allTasks = append(allTasks, r.Items...)
+
+		if r.NextPageToken == "" {
+			break
+		}
+		pageToken = r.NextPageToken
+	}
+
+	return allTasks, nil
 }

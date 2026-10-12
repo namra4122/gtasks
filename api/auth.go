@@ -8,12 +8,15 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/BRO3886/gtasks/internal/config"
 	"github.com/BRO3886/gtasks/internal/utils"
 	"github.com/zalando/go-keyring"
 	"golang.org/x/oauth2"
+	"google.golang.org/api/calendar/v3"
+	"google.golang.org/api/googleapi"
 	"google.golang.org/api/option"
 	"google.golang.org/api/tasks/v1"
 )
@@ -78,7 +81,16 @@ func isTokenValid(oauthConfig *oauth2.Config, token *oauth2.Token) bool {
 		return false
 	}
 
-	_, err = srv.Tasklists.List().MaxResults(1).Do()
+	if _, err = srv.Tasklists.List().MaxResults(1).Do(); err != nil {
+		return false
+	}
+
+	// Tokens issued before calendar support lack the calendar scopes
+	calSrv, err := calendar.NewService(context.Background(), option.WithHTTPClient(client))
+	if err != nil {
+		return false
+	}
+	_, err = calSrv.CalendarList.List().MaxResults(1).Do()
 	return err == nil
 }
 
@@ -109,6 +121,36 @@ func GetService() (*tasks.Service, error) {
 	}
 
 	return srv, nil
+}
+
+// GetCalendarService creates a Google Calendar service client
+func GetCalendarService() (*calendar.Service, error) {
+	oauthConfig, err := config.GetOAuth2Config()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get OAuth2 config: %v", err)
+	}
+
+	client, err := getClient(oauthConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get HTTP client: %v", err)
+	}
+
+	srv, err := calendar.NewService(context.Background(), option.WithHTTPClient(client))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Calendar service: %v", err)
+	}
+
+	return srv, nil
+}
+
+// wrapScopeError replaces a 403 insufficient-scope error with a re-login hint.
+func wrapScopeError(err error) error {
+	var gErr *googleapi.Error
+	if errors.As(err, &gErr) && gErr.Code == 403 &&
+		strings.Contains(strings.ToLower(gErr.Message), "insufficient authentication scopes") {
+		return fmt.Errorf("token lacks calendar access. Run 'gtasks logout && gtasks login' to re-authorize")
+	}
+	return err
 }
 
 // authenticateWithPKCE performs OAuth2 authentication with PKCE
